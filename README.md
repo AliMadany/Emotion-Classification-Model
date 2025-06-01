@@ -1,232 +1,270 @@
-# Emotion Recognition with Deep Learning
+# Deep Learning Emotion Classification
 
-This repository contains a Colab notebook (DeepLearningProject.ipynb) that demonstrates an end-to-end pipeline for training and evaluating a convolutional neural network (CNN) to classify facial expressions into four categories: Angry, Happy, Neutral, and Sad. The notebook uses a dataset hosted on Google Drive, performs data preprocessing, implements K-fold cross-validation, and visualizes performance via a confusion matrix.
+## Project Overview
+This repository contains a deep learning project for classifying facial emotions into four categories: **Angry**, **Happy**, **Sad**, and **Neutral**. The project is implemented as a Jupyter notebook (`DeepLearningProject.ipynb`) and covers the following stages:
+1. **Data Preparation**  
+   - Connecting to a Google Drive–hosted dataset  
+   - Unzipping and organizing image files into class-specific folders  
+   - (Optional) Data augmentation and preprocessing  
+2. **Modeling (From Scratch)**  
+   - Building a convolutional neural network (CNN) in TensorFlow/Keras  
+   - Training with k-fold cross-validation (K=4)  
+   - Evaluating on validation and test splits  
+3. **Modeling (Using Libraries)**  
+   - Leveraging higher-level utilities for data loading and augmentation  
+   - Repeating training and evaluation experiments using library workflows  
+4. **Milestone & Visualization**  
+   - Plotting accuracy and loss curves over epochs  
+   - Displaying a confusion matrix for final test-set performance  
+
+By the end of this notebook, you will have a trained CNN capable of distinguishing between the four emotion classes and analysis plots showcasing its performance.  
 
 ---
 
 ## Table of Contents
-- Project Overview
-- Dataset
-- Prerequisites & Dependencies
-- Usage: Running the Notebook
-- Notebook Structure
-  1. Mounting Google Drive & Unzipping Data
-  2. Data Preparation
-  3. Dataset Loading & Preprocessing
-  4. Model Architecture & Training
-  5. K-Fold Cross-Validation
-  6. Evaluation & Confusion Matrix
-- Result Outputs
-- Project Structure
-- Acknowledgments
-
----
-
-## Project Overview
-
-Facial emotion recognition is a classic computer vision problem where an image of a human face is classified into different emotion categories. In this project, a CNN is trained on a small four-class dataset (Angry, Happy, Neutral, Sad) to automatically predict the expressed emotion.
-
-The notebook covers:
-
-1. Connecting to Google Drive to access a zipped dataset.
-2. Unzipping and arranging image files into their class folders.
-3. Preprocessing images (resizing, normalization).
-4. Splitting data using K-fold cross-validation for more robust evaluation.
-5. Building a simple CNN with Keras (TensorFlow backend).
-6. Training the model and tracking metrics.
-7. Visualizing performance using a confusion matrix.
+1. [Dataset](#dataset)  
+2. [Prerequisites](#prerequisites)  
+3. [Installation](#installation)  
+4. [Project Structure](#project-structure)  
+5. [Usage](#usage)  
+6. [Model Architecture](#model-architecture)  
+7. [Training & Evaluation](#training--evaluation)  
+8. [Results & Visualizations](#results--visualizations)  
+9. [Dependencies](#dependencies)  
+10. [Contributing](#contributing)  
+11. [License](#license)  
 
 ---
 
 ## Dataset
+- **Source**: The dataset should be stored on Google Drive (or a similar cloud storage) and consists of facial images categorized into four emotion subfolders:  
+  - `Angry/`  
+  - `Happy/`  
+  - `Sad/`  
+  - `Neutral/`  
+- **Organization**:  
+  1. Upload the zipped dataset (containing the four folders) to your Google Drive.  
+  2. Mount Google Drive within the notebook to access the data.  
+  3. Unzip the archive and merge all images into a single directory structure under `emotions_combined/` (one subfolder per class).  
 
-The dataset used here is expected to live on your Google Drive in the following form:
-
-/MyDrive/  
-├─ DLCV_SS25_Dataset.zip        # Main archive (optional; you can replace with individual zips for each class)  
-├─ Angry.zip                    # Contains images for the “Angry” class  
-├─ Happy.zip                    # Contains images for the “Happy” class  
-├─ Neutral.zip                  # Contains images for the “Neutral” class  
-└─ Sad.zip                      # Contains images for the “Sad” class  
-
-Each .zip file should contain only JPEG/PNG images of faces for that particular emotion. When unzipped, you’ll end up with four folders at the notebook’s working directory:
-
-content/  
-├─ Angry/  
-├─ Happy/  
-├─ Neutral/  
-└─ Sad/  
-
-Note: The notebook file itself refers to /content/drive/MyDrive/ as the base path when unzipping. Adjust these paths if your dataset is stored elsewhere.
+> **Note:** Images are resized to 224×224 pixels before being fed to the CNN.  
 
 ---
 
-## Prerequisites & Dependencies
-
-This project is set up to run in Google Colab, but you can also run it locally if you have the required libraries installed. Below are the main dependencies:
-
-- Python 3.7+  
-- TensorFlow 2.x (with tensorflow.keras)  
-- PyTorch (used minimally for data structures; the model itself uses Keras)  
-- scikit-learn (train_test_split, clustering, metrics)  
-- OpenCV (cv2) – for reading/resizing images  
-- Pillow (PIL.Image) – alternative image I/O  
-- NumPy  
-- Matplotlib – for plotting and displaying the confusion matrix  
-- Google Colab utilities (google.colab.drive)  
-- Other utilities: shutil, os, random, hashlib, datetime, collections.deque  
-
-If you run locally, you can install them via:
-
-pip install tensorflow==2.* torch scikit-learn opencv-python pillow matplotlib
+## Prerequisites
+- A Python 3.7+ environment (tested on Python 3.8)  
+- Access to a GPU (recommended, but CPU-only also works; training will be slower)  
+- A Google Drive account (if you wish to follow the “Connect to Drive” cells as-is)  
 
 ---
 
-## Usage: Running the Notebook
+## Installation
+1. **Clone this repository**  
+   ```bash
+   git clone https://github.com/your-username/deep-learning-emotion-classification.git
+   cd deep-learning-emotion-classification
+   ```
 
-1. Upload the notebook (DeepLearningProject.ipynb) to your Google Drive or open it directly in Colab.
+2. **Create & activate a virtual environment (optional but recommended)**  
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate       # Linux/Mac
+   venv\Scripts\activate.bat      # Windows
+   ```
 
-2. Ensure the dataset .zip files (DLCV_SS25_Dataset.zip, Angry.zip, Happy.zip, Neutral.zip, Sad.zip) are present under MyDrive/ (or update the paths in the notebook to point to wherever you stored them).
+3. **Install required Python packages**  
+   ```bash
+   pip install -r requirements.txt
+   ```
+   _If you don’t have a `requirements.txt`, install the main dependencies manually:_  
+   ```bash
+   pip install numpy pandas matplotlib tensorflow torch opencv-python pillow scikit-learn
+   ```
 
-3. Open in Colab  
-   - Go to https://colab.research.google.com → Upload → Select DeepLearningProject.ipynb from Drive.
-
-4. Run cells in order. The high-level sequence is:  
-   1. Mount Google Drive  
-   2. Unzip dataset archives  
-   3. Prepare folders and preprocessing code  
-   4. Load images into NumPy arrays (with corresponding labels)  
-   5. Define and compile the CNN  
-   6. Train with K-fold splitting  
-   7. Evaluate and plot a confusion matrix  
-
-5. Inspect results: After training, you’ll see training/validation curves and a confusion matrix on the test splits.
-
----
-
-## Notebook Structure
-
-Below is a brief walkthrough of each major section in DeepLearningProject.ipynb.
-
-### 1. Mounting Google Drive & Unzipping Data
-
-- from google.colab import drive  
-  drive.mount('/content/drive')  
-
-  Mounts your Google Drive at /content/drive/.
-
-- !unzip /content/drive/MyDrive/DLCV_SS25_Dataset.zip  
-  !unzip /content/drive/MyDrive/Angry.zip  
-  !unzip /content/drive/MyDrive/Happy.zip  
-  !unzip /content/drive/MyDrive/Neutral.zip  
-  !unzip /content/drive/MyDrive/Sad.zip  
-
-  Unzips the four emotion folders into /content/.
-
-### 2. Data Preparation
-
-- Directory Creation  
-  Creates subfolders (e.g., dataset/Angry/, dataset/Happy/, etc.) if they don’t exist.  
-- Moving/Copying Images  
-  Uses shutil to move or copy each class folder into a unified dataset/ directory.
-
-### 3. Dataset Loading & Preprocessing
-
-- Image I/O  
-  Uses OpenCV (cv2.imread) and/or PIL (Image.open) to read images.  
-- Image Resizing  
-  Every image is resized (e.g., 48×48 or 64×64 pixels) and normalized to [0,1].  
-- Label Encoding  
-  Assigns a numeric label (e.g., 0 = Angry, 1 = Happy, etc.) and one-hot encodes via to_categorical.  
-- Train/Test Split  
-  Uses sklearn.model_selection.train_test_split (though the primary evaluation uses a K-fold approach).
-
-### 4. Model Architecture & Training
-
-- Framework  
-  Built with TensorFlow’s Keras API (tensorflow.keras.models.Sequential).  
-- Layers  
-  - Convolutional layers (Conv2D, MaxPooling2D)  
-  - Flattening  
-  - Dense layers with ReLU activations  
-  - Final Dense layer with softmax (4 output neurons)  
-- Compilation  
-  - Optimizer: Adam (or similar)  
-  - Loss: categorical_crossentropy  
-  - Metrics: accuracy  
-- Early Stopping  
-  Uses tensorflow.keras.callbacks.EarlyStopping to prevent overfitting.
-
-### 5. K-Fold Cross-Validation
-
-- Setup  
-  - sklearn.model_selection.KFold (e.g., n_splits=5)  
-  - Iterates through each fold, training on (k−1)/k of data and validating on 1/k.  
-- Training Loop  
-  For each fold:  
-  1. Split X and y into train/validation sets.  
-  2. Instantiate a fresh model.  
-  3. Fit the model for a fixed number of epochs (with early stopping).  
-  4. Save validation accuracy and loss metrics per fold.  
-- Aggregated Metrics  
-  After all folds finish, the notebook prints average accuracy and loss across folds.
-
-### 6. Evaluation & Confusion Matrix
-
-- Final Test Set  
-  After K-fold, the notebook typically keeps aside a small test set (or uses the last fold as “test”).  
-- Predictions  
-  - Uses model.predict(X_test) to obtain probabilities.  
-  - Converts them to class indices with np.argmax(...).  
-- Confusion Matrix  
-  - Builds a confusion matrix via sklearn.metrics.confusion_matrix.  
-  - Visualizes it with sklearn.metrics.ConfusionMatrixDisplay and matplotlib.pyplot.  
-- Model Visualization  
-  - Optionally calls plot_model(model, to_file="cnn_model.png", show_shapes=True, show_layer_names=True) to save an image of the model architecture.
-
----
-
-## Result Outputs
-
-1. Training & Validation Curves  
-   - Plots of loss and accuracy across epochs for each fold (if cell is enabled).  
-2. Average Cross-Validation Score  
-   - Printed summary (e.g., “Mean CV Accuracy: 92.5%”).  
-3. Confusion Matrix on Test Set  
-   - A heatmap showing true vs. predicted classes (Angry, Happy, Neutral, Sad).  
-4. Saved Model Diagram  
-   - cnn_model.png (Keras visualization of the CNN)
+4. **(Optional) If you plan to use TensorBoard for monitoring**  
+   ```bash
+   pip install tensorboard
+   ```
 
 ---
 
 ## Project Structure
+```
+├── DeepLearningProject.ipynb   # Main notebook covering data prep, modeling, evaluation, and visualization
+├── requirements.txt            # List of Python dependencies
+├── README.md                   # This file
+└── data/                       # (Optional) Local folder for unzipped images if not using Drive
+    ├── emotions_combined/
+    │   ├── Angry/
+    │   ├── Happy/
+    │   ├── Sad/
+    │   └── Neutral/
+    └── ...
+```
+- **DeepLearningProject.ipynb**  
+  - Contains all code cells for:  
+    1. Mounting Google Drive  
+    2. Unzipping & organizing data  
+    3. Data pre-processing (resizing, normalization, augmentation)  
+    4. Model definition (from scratch)  
+    5. Model definition (using higher-level libraries)  
+    6. Training loops (with 4-fold cross-validation)  
+    7. Evaluation on a held-out test set  
+    8. Plotting accuracy/loss and confusion matrix  
 
-(root)
-├─ DeepLearningProject.ipynb # Main Colab notebook
-├─ README.md # (This file)
-├─ requirements.txt # (Optional; list of pip packages)
-├─ cnn_model.png # Generated model architecture plot
-└─ (dataset folders after unzip)
-├─ Angry/
-├─ Happy/
-├─ Neutral/
-└─ Sad/
-
-
-- If you choose to unzip locally (instead of in Colab), make sure these folders exist in your working directory.
+- **requirements.txt**  
+  - Pin exact library versions used (e.g., `tensorflow==2.10.0`, `torch==1.12.0`, etc.).  
 
 ---
 
-## Acknowledgments
+## Usage
 
-- Dataset Source: Adapted (or provided by) DL/CV course materials (e.g., “DLCV_SS25_Dataset”).  
-- Libraries & Tutorials:  
-  - TensorFlow Keras Documentation  
-  - scikit-learn K-Fold Cross-Validation  
-  - ConfusionMatrixDisplay  
+1. **Open the Notebook**  
+   Launch Jupyter (or JupyterLab) from the repository root:  
+   ```bash
+   jupyter notebook DeepLearningProject.ipynb
+   ```
+   or
+   ```bash
+   jupyter lab DeepLearningProject.ipynb
+   ```
 
-Feel free to update this README with any additional details (e.g., hyperparameter values, links to related research papers, etc.). Good luck and happy coding!
+2. **Connect to Google Drive (if using Drive)**  
+   In the first code cell, run:  
+   ```python
+   from google.colab import drive
+   drive.mount('/content/drive')
+   ```
+   Then point `DATA_PATH` to the mounted folder containing your zipped dataset.
 
+3. **Unzip & Organize Data**  
+   Follow the “Unzipping the dataset folder” cells. This will create:
+   ```
+   /content/emotions_combined/
+      ├── Angry/
+      ├── Happy/
+      ├── Sad/
+      └── Neutral/
+   ```
 
+4. **Run Data Preparation**  
+   - Resize all images to 224×224 pixels.  
+   - Optionally apply data augmentation (e.g., flips, rotations).
 
+5. **Run Model Training**  
+   - **Part 1 (From Scratch)**  
+     - Defines a custom CNN with Conv2D → Pooling → BatchNorm → Dropout → Dense layers.  
+     - Compiles with `Adam` optimizer and `sparse_categorical_crossentropy` loss.  
+     - Trains for `EPOCHS = 20`, `BATCH_SIZE = 8`, using 4-fold cross-validation.  
+   - **Part 2 (Using Libraries)**  
+     - Uses `ImageDataGenerator` (or similar) for on-the-fly augmentation and batching.  
+     - Repeats training/validation splits for comparison.
 
+6. **Evaluate & Visualize**  
+   - Once training is complete, evaluate on a held-out test set.  
+   - Plot training vs. validation accuracy/loss curves over epochs.  
+   - Compute and display a confusion matrix for final test-set predictions.
+
+---
+
+## Model Architecture
+
+Below is a high-level summary of the CNN architecture defined in **Part 1**:
+
+```
+Input: 224×224×3 image
+└─ Conv2D (32 filters, 5×5, ReLU)  
+   └─ MaxPooling2D (2×2)  
+   └─ BatchNormalization  
+   └─ Conv2D (16 filters, 7×7, ReLU)  
+       └─ MaxPooling2D (2×2)  
+       └─ Dropout (0.30)  
+       └─ Flatten  
+       └─ Dense (64 units, sigmoid)  
+       └─ Dense (4 units, softmax)
+```
+
+- **Optimizer**: Adam  
+- **Loss**: Sparse Categorical Cross-Entropy  
+- **Metrics**: Accuracy  
+
+In **Part 2**, you may see a variation that utilizes `tf.keras.preprocessing.image.ImageDataGenerator` pipelines and potentially a different CNN backbone.
+
+---
+
+## Training & Evaluation
+
+- **K-Fold Cross-Validation (K=4)**  
+  1. Split combined dataset into 4 folds.  
+  2. For each fold:  
+     - Use 3 folds for training, 1 fold for validation.  
+     - Train for 20 epochs (adjustable).  
+     - Record validation accuracy/loss.  
+  3. Average validation metrics across folds to estimate generalization.  
+
+- **Final Test Evaluation**  
+  - After cross-validation, set aside a separate “test” split (e.g., 10–15% of overall data).  
+  - Evaluate the best-performing fold’s model (or the model retrained on all train+val folds) on this test set.  
+  - Display a confusion matrix using `sklearn.metrics.ConfusionMatrixDisplay`.  
+
+- **Visualization**  
+  - Plot curves showing training vs. validation accuracy and loss for each epoch.  
+  - After test evaluation, plot a 4×4 confusion matrix heatmap labeled with the four emotion classes.  
+
+---
+
+## Results & Visualizations
+
+1. **Accuracy & Loss Curves**  
+   After running the training cells, you should see two line plots per training session (one for accuracy, one for loss). Typical outputs include:  
+   - Training accuracy approaching ~80–90% by epoch 20 (depending on dataset size and augmentation).  
+   - Validation accuracy slightly lower, indicating generalization performance.  
+
+2. **Confusion Matrix**  
+   A heatmap that shows how often each true emotion class is predicted as each of the four labels. An ideal confusion matrix will have high values along the diagonal (correct predictions) and low off-diagonal values (misclassifications).
+
+   Example (mock layout):
+
+   | Predicted \ True | Angry | Happy | Sad | Neutral |
+   |-------------------|-------|-------|-----|---------|
+   | **Angry**         | 45    |   3   |  2  |   0     |
+   | **Happy**         |  2    | 48    |  1  |   0     |
+   | **Sad**           |  1    |   2   | 47  |   1     |
+   | **Neutral**       |  0    |   1   |  2  |  46     |
+
+---
+
+## Dependencies
+
+Below is a non-exhaustive list of Python packages used in this project. Exact versions can be found in `requirements.txt`.
+
+- **Core Libraries**  
+  - `numpy`  
+  - `pandas` (optional; for any tabular logging)  
+  - `matplotlib`  
+  - `scikit-learn`  
+
+- **Deep Learning Frameworks**  
+  - `tensorflow>=2.8.0` (for Keras API)  
+  - `torch` (imported but not strictly required for the shown notebook; can be omitted if not used)  
+
+- **Image Processing**  
+  - `opencv-python` (cv2)  
+  - `Pillow`  
+
+- **Utilities**  
+  - `tqdm` (for progress bars; optional)  
+  - `google-colab` (if running in Colab; for `drive.mount`)  
+
+---
+
+## Contributing
+1. Fork this repository.  
+2. Create a new branch (`git checkout -b feature/YourFeature`).  
+3. Make your changes and commit them (`git commit -m "Add new data augmentation pipeline"`).  
+4. Push to your branch (`git push origin feature/YourFeature`).  
+5. Open a Pull Request.  
+
+We welcome improvements, bug fixes, and new features (e.g., additional emotion classes, alternate model architectures, integration with TensorBoard, etc.).
+
+---
